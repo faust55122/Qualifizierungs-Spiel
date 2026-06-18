@@ -3,6 +3,147 @@
 // ============================================================
 
 // ============================================================
+//  HIGHSCORE — JSONBin.io Konfiguration
+//  Trage hier deine eigenen Werte ein:
+// ============================================================
+const JSONBIN_API_KEY  = '$2a$10$25KUTuEXfrhJx..46EAvRuQlyMLiuD2G8YfXy8T3B4n/51wpKiS0C';   // z.B. '$2a$10$abc123...'
+const JSONBIN_BIN_ID   = '6a32e013da38895dfed1ffff';   // z.B. '6849abc12e...'
+const JSONBIN_BASE_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+const HS_ADMIN_PW      = 'gmp-reset-2025';       // ← Admin-Passwort für Reset (ändern!)
+const HS_MAX_ENTRIES   = 20;
+
+// ── Highscore: Einträge laden ────────────────────────────────
+async function hsLoad() {
+  try {
+    const r = await fetch(JSONBIN_BASE_URL + '/latest', {
+      headers: {
+        'X-Access-Key': JSONBIN_API_KEY,
+        'X-Bin-Meta':   'false'
+      }
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    return Array.isArray(data.scores) ? data.scores : [];
+  } catch { return []; }
+}
+
+// ── Highscore: Eintrag speichern ────────────────────────────
+async function hsSave(scores) {
+  await fetch(JSONBIN_BASE_URL, {
+    method: 'PUT',
+    headers: {
+      'Content-Type':      'application/json',
+      'X-Access-Key':      JSONBIN_API_KEY,
+      'X-Bin-Versioning':  'false',
+    },
+    body: JSON.stringify({ scores }),
+  });
+}
+
+// ── Highscore: Neuen Score eintragen ────────────────────────
+// Gibt { rank, total, scores, eligible } zurück
+async function hsSubmit(name, score) {
+  const scores = await hsLoad();
+  const entry  = { name: name.substring(0, 20), score, date: new Date().toLocaleDateString('de-DE') };
+  scores.push(entry);
+  scores.sort((a, b) => b.score - a.score);
+  const rank  = scores.indexOf(entry) + 1;
+  const trimmed = scores.slice(0, HS_MAX_ENTRIES);
+  await hsSave(trimmed);
+  return { rank, total: trimmed.length, scores: trimmed };
+}
+
+// ── Highscore-Fenster anzeigen ───────────────────────────────
+async function showHighscoreOverlay(playerScore, playerName) {
+  const ov = document.getElementById('hs-overlay');
+  const content = document.getElementById('hs-content');
+  ov.style.display = 'flex';
+  content.innerHTML = '<div style="color:var(--text3);font-style:italic;padding:20px 0">Highscores werden geladen …</div>';
+
+  const scores = await hsLoad();
+  const playerRank = scores.filter(e => e.score > playerScore).length + 1;
+  const eligible   = playerRank <= HS_MAX_ENTRIES;
+
+  // Tabellenzeilen
+  const rows = scores.map((e, i) => {
+    const isPlayer = playerName && e.name === playerName && e.score === playerScore;
+    const bg = isPlayer ? 'background:var(--teal-light);font-weight:600;' : '';
+    return `<tr style="${bg}">
+      <td style="padding:5px 8px;color:var(--text3);font-family:'Source Code Pro',monospace;font-size:12px">#${i + 1}</td>
+      <td style="padding:5px 8px;font-size:13px">${e.name}</td>
+      <td style="padding:5px 8px;text-align:right;font-family:'Source Code Pro',monospace;font-size:13px;color:var(--teal)">${e.score}</td>
+      <td style="padding:5px 8px;font-size:11px;color:var(--text3)">${e.date || ''}</td>
+    </tr>`;
+  }).join('');
+
+  const tableHtml = scores.length === 0
+    ? '<div style="color:var(--text3);font-style:italic;padding:10px 0">Noch keine Einträge.</div>'
+    : `<table style="width:100%;border-collapse:collapse;margin-top:8px">${rows}</table>`;
+
+  // Eingabebereich: nur zeigen wenn noch nicht eingetragen und Platz in Top 20
+  let inputHtml = '';
+  if (playerScore !== null && !playerName) {
+    if (eligible) {
+      inputHtml = `
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Du bist auf Platz <strong>${playerRank}</strong> — trage deinen Namen ein:</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="hs-name-input" maxlength="20" placeholder="Dein Name (max. 20 Zeichen)"
+              style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Source Sans 3',sans-serif;font-size:13px;color:var(--text);background:var(--surface2)">
+            <button onclick="hsEnterScore(${playerScore})" class="modal-btn" style="padding:7px 16px;font-size:13px">Eintragen</button>
+          </div>
+        </div>`;
+    } else {
+      inputHtml = `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);color:var(--text3);font-style:italic;font-size:13px">
+        Dein Score (${playerScore}) reicht nicht für die Top ${HS_MAX_ENTRIES}. Beim nächsten Mal!
+      </div>`;
+    }
+  }
+
+  // Admin-Reset (versteckt, per Klick sichtbar)
+  const adminHtml = `
+    <div style="margin-top:18px;text-align:right">
+      <span id="hs-admin-toggle" onclick="document.getElementById('hs-admin-box').style.display='block';this.style.display='none'"
+        style="font-size:10px;color:var(--text3);cursor:pointer;user-select:none">⚙</span>
+      <div id="hs-admin-box" style="display:none;margin-top:8px">
+        <input id="hs-admin-pw" type="password" placeholder="Admin-Passwort" maxlength="40"
+          style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;width:180px">
+        <button onclick="hsAdminReset()" style="margin-left:6px;padding:5px 10px;border:1px solid var(--red);background:var(--red-light);color:var(--red);border-radius:var(--radius-sm);font-size:12px;cursor:pointer">Reset</button>
+        <span id="hs-admin-msg" style="font-size:11px;color:var(--text3);margin-left:6px"></span>
+      </div>
+    </div>`;
+
+  content.innerHTML = `
+    <div style="font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text3);margin-bottom:4px;font-family:'Source Code Pro',monospace">TOP ${HS_MAX_ENTRIES} — HALL OF FAME</div>
+    ${tableHtml}
+    ${inputHtml}
+    ${adminHtml}`;
+}
+
+// ── Score eintragen und Tabelle aktualisieren ────────────────
+async function hsEnterScore(playerScore) {
+  const input = document.getElementById('hs-name-input');
+  const name  = (input ? input.value.trim() : '') || 'Anonym';
+  if (!name) { input && (input.style.borderColor = 'var(--red)'); return; }
+  document.getElementById('hs-content').innerHTML =
+    '<div style="color:var(--text3);font-style:italic;padding:20px 0">Wird gespeichert …</div>';
+  const result = await hsSubmit(name, playerScore);
+  showHighscoreOverlay(playerScore, name);
+}
+
+// ── Admin-Reset ──────────────────────────────────────────────
+async function hsAdminReset() {
+  const pw  = document.getElementById('hs-admin-pw').value;
+  const msg = document.getElementById('hs-admin-msg');
+  if (pw !== HS_ADMIN_PW) { msg.textContent = '❌ Falsches Passwort'; msg.style.color = 'var(--red)'; return; }
+  msg.textContent = 'Wird zurückgesetzt …'; msg.style.color = 'var(--text3)';
+  await hsSave([]);
+  msg.textContent = '✅ Highscore geleert!'; msg.style.color = 'var(--green)';
+  setTimeout(() => showHighscoreOverlay(null, null), 1000);
+}
+
+
+// ============================================================
 //  EQUIPMENT DEFINITIONS
 //  Each run randomly picks one equipment — determines subtitle,
 //  whether Aseptik is required, and flavour throughout.
@@ -899,7 +1040,7 @@ function showEndScreen(win, reason) {
     // + risikoBonus (0–20) + weekScore (0–50) + divalBonus
     // Theoretisches Maximum ohne DIVAL: 700 + 200 + 20 + 50 = 970 → gut erreichbar
     const rawScore   = kpiScore * 7 + skillAvg * 2 + risikoBonus + weekScore + divalBonus;
-    const finalScore = Math.min(1000, Math.round(rawScore));
+    const finalScore = Math.min(900, Math.round(rawScore));
 
     let divalText = '';
     if (state.divalActive) {
@@ -910,7 +1051,7 @@ function showEndScreen(win, reason) {
       else
         divalText = '\n\n❌ DIVAL gescheitert: Regulatory hat das digitale Format abgelehnt. IT war auch nicht hilfreich.';
     }
-    const scoreText = `\n\n📊 Abschlusspunktzahl: ${finalScore} / 1000 Punkte${divalText}`;
+    const scoreText = `\n\n📊 Abschlusspunktzahl: ${finalScore} / 900 Punkte${divalText}`;
 
     const challengesHtml = _buildChallengesHtml();
 
@@ -929,10 +1070,16 @@ function showEndScreen(win, reason) {
       titleClass = 'warn-legend'; titleText = '🔄 Nachqualifizierung';
       bodyText = 'Weitere Maßnahmen notwendig. Ein neuer Change-Control wird eröffnet. Ihr Kalender weint.' + scoreText;
     }
+    state.lastFinalScore = finalScore;   // für Highscore-Button merken
+
     mt.className  = titleClass;
     mt.textContent = titleText;
     mb.innerHTML = `<span style="white-space:pre-wrap">${bodyText}</span>${challengesHtml}`;
     mbtn.className = 'modal-btn';
+
+    // Highscore-Button einfügen (nur bei Gewinn)
+    const hsBtn = document.getElementById('hs-open-btn');
+    if (hsBtn) hsBtn.style.display = 'inline-block';
   } else {
     mt.className  = 'lose-legend';
     mt.textContent = '☠️ Totaler GMP-GAU';
@@ -953,6 +1100,8 @@ function showEndScreen(win, reason) {
       loseText = 'Die maximale Projektlaufzeit ist erreicht. Das Equipment wartet. Quality auch. Alle warten. Für immer.';
     mb.innerHTML = `<span>${loseText}</span>${_buildChallengesHtml()}`;
     mbtn.className = 'modal-btn lose';
+    const hsBtn = document.getElementById('hs-open-btn');
+    if (hsBtn) hsBtn.style.display = 'none';
   }
   render();
 }
