@@ -785,13 +785,29 @@ function _commitTurn() {
 
 function _isFreigabePhase() { return state.phase >= 6; }
 
+function _calcDivalChance() {
+  const s = state.skills;
+  if (s.tech < 70) return 0;
+  let base;
+  if (s.tech >= 90)      base = 0.65;
+  else if (s.tech >= 80) base = 0.60;
+  else                   base = 0.50; // 70–79 %
+  // +5% pro genutzter DIVAL-Projektaktion (max 4 × 5% = +20%)
+  const divalActionIds = ['dival_audit_trail','dival_esign','dival_server','dival_access'];
+  const usedCount = divalActionIds.filter(id => hasUsed(state.divalUsed, id)).length;
+  return Math.min(0.95, base + usedCount * 0.05);
+}
+
 function _resolveFreigabe() {
   state.apThisRound = apForThisRound();
   state.ap = state.apThisRound;
   if (state.divalActive && !state.divalDone) {
     state.divalDone = true;
-    const techOk = state.skills.tech >= 60;
-    state.divalResult = (techOk && Math.random() < (state.skills.tech - 60) / 100) ? 'success' : (techOk ? 'fail' : 'fail_tech');
+    if (state.skills.tech < 70) {
+      state.divalResult = 'fail_tech';
+    } else {
+      state.divalResult = Math.random() < _calcDivalChance() ? 'success' : 'fail';
+    }
   }
   if (state.equipment.requiresAseptik && state.skills.aseptik < 60) showEndScreen(false, 'aseptik');
   else showEndScreen(true);
@@ -830,7 +846,7 @@ function _applyPassiveDecay() {
   if (gmpMalus > 0) state.kpis.gmp = clamp(state.kpis.gmp - gmpMalus);
 
   let gmpVertrauenMalus = 0;
-  if (g >= 10 && g <= 30)      gmpVertrauenMalus = 7;
+  if (g >= 10 && g <= 30)      gmpVertrauenMalus = 4;
   else if (g >= 31 && g <= 45) gmpVertrauenMalus = 5;
   else if (g >= 46 && g <= 60) gmpVertrauenMalus = 3;
   else if (g >= 61 && g <= 71) gmpVertrauenMalus = 1;
@@ -866,10 +882,23 @@ function _applyPassiveDecay() {
     state.kpis.risiko    = clamp(state.kpis.risiko - risikostatusDelta); // invertiert!
   }
 
-  // --- Technisches Verständnis: unverändert (Risiko/Wissen) ---
-  if (state.skills.tech < 60) {
-    state.kpis.risiko = clamp(state.kpis.risiko + 5);
+  // --- Technisches Verständnis: gestufte Effekte auf Risiko + Equipment-Wissen + Motivation ---
+  // Hinweis: risiko ist intern invertiert — Risiko +1 intern = Risikostatus −1 angezeigt
+  const t = state.skills.tech;
+  if (t >= 10 && t <= 39) {
+    state.kpis.risiko = clamp(state.kpis.risiko + 4);
     state.kpis.wissen = clamp(state.kpis.wissen - 4);
+  } else if (t >= 40 && t <= 50) {
+    state.kpis.risiko = clamp(state.kpis.risiko + 3);
+    state.kpis.wissen = clamp(state.kpis.wissen - 3);
+  } else if (t >= 51 && t <= 65) {
+    state.kpis.risiko = clamp(state.kpis.risiko + 1);
+    state.kpis.wissen = clamp(state.kpis.wissen - 2);
+  } else if (t >= 66 && t <= 80) {
+    state.kpis.wissen = clamp(state.kpis.wissen + 1);
+  } else if (t >= 81) {
+    state.kpis.wissen     = clamp(state.kpis.wissen + 2);
+    state.kpis.motivation = clamp(state.kpis.motivation + 3);
   }
 }
 
@@ -1022,8 +1051,11 @@ function _checkWinConditions() {
   if (state.phase >= 6) {
     if (state.divalActive && !state.divalDone) {
       state.divalDone = true;
-      const techOk = state.skills.tech >= 60;
-      state.divalResult = (techOk && Math.random() < (state.skills.tech - 60) / 100) ? 'success' : (techOk ? 'fail' : 'fail_tech');
+      if (state.skills.tech < 70) {
+        state.divalResult = 'fail_tech';
+      } else {
+        state.divalResult = Math.random() < _calcDivalChance() ? 'success' : 'fail';
+      }
     }
     // Aseptik-Check nur wenn Equipment es erfordert
     if (state.equipment.requiresAseptik && state.skills.aseptik < 60) {
@@ -1104,7 +1136,7 @@ function showEndScreen(win, reason) {
       if (state.divalResult === 'success')
         divalText = '\n\n🚀 DIVAL erfolgreich: Papierlose Qualifizierung akzeptiert! +100 Punkte Bonus.';
       else if (state.divalResult === 'fail_tech')
-        divalText = '\n\n❌ DIVAL gescheitert: Das technische Verständnis war zu gering für eine digitale Qualifizierung. Mindestens 60 % wären nötig gewesen. −50 Punkte Abzug.';
+        divalText = '\n\n❌ DIVAL gescheitert: Das technische Verständnis war zu gering für eine digitale Qualifizierung. Mindestens 70 % wären nötig gewesen. −50 Punkte Abzug.';
       else
         divalText = '\n\n❌ DIVAL gescheitert: Regulatory hat das digitale Format abgelehnt. IT war auch nicht hilfreich. −50 Punkte Abzug.';
     }
@@ -1180,7 +1212,7 @@ function showDivalOffer() {
     <p style="margin-bottom:12px">Die Möglichkeit besteht: eine vollständig papierlose, digitale Qualifizierung — kein Word, kein Drucker, keine Unterschriften auf Papier.</p>
     <p style="margin-bottom:12px">Das Projekt nennt sich <strong>DIVAL</strong>. Es ist risikoreich, kostet sofort <strong>3 AP</strong> und schaltet neue IT-Aktionen frei, die ihrerseits Budget kosten können.</p>
     <p style="margin-bottom:12px">⚠️ <strong style="color:var(--amber)">Wichtig:</strong> Für ein erfolgreiches DIVAL-Projekt ist ein <strong>höheres technisches Verständnis</strong> erforderlich. Ist dieses nicht ausreichend entwickelt, ist ein Erfolg ausgeschlossen.</p>
-    <p style="margin-bottom:16px">Die Erfolgswahrscheinlichkeit ist <strong style="color:var(--amber)">ungewiss</strong>. Bei Erfolg: <strong style="color:var(--green)">+100 Bonuspunkte</strong>. Bei Misserfolg: kein direkter Spielabbruch, aber verschwendete Ressourcen und zusätzliche negative Events.</p>
+    <p style="margin-bottom:16px">Die Erfolgswahrscheinlichkeit hängt von deinem <strong>Technischen Verständnis</strong> ab — mind. 70 % erforderlich. Tech 70–79 %: 50 % · Tech 80–89 %: 60 % · Tech ≥ 90 %: 65 %. Pro genutzter DIVAL-Projektaktion: <strong>+5 %</strong> (max. +20 % bei allen 4 Aktionen). Bei Erfolg: <strong style="color:var(--green)">+100 Bonuspunkte</strong>. Bei Misserfolg: −50 Punkte.</p>
     <p style="color:var(--text3);font-size:12px">Entscheidung gilt für das gesamte restliche Spiel.</p>`;
   mbtn.style.display = 'none'; // Standard-Button ausblenden
   const hsBtn = document.getElementById('hs-open-btn');
@@ -1362,7 +1394,7 @@ function render() {
     if (g >= 10 && g <= 30) gmpParts.push('GMP-Wissen −10 %');
     else if (g >= 31 && g <= 45) gmpParts.push('GMP-Wissen −5 %');
     else if (g >= 46 && g <= 60) gmpParts.push('GMP-Wissen −1 %');
-    if (g >= 10 && g <= 30) gmpParts.push('Vertrauen −7 %');
+    if (g >= 10 && g <= 30) gmpParts.push('Vertrauen −4 %');
     else if (g >= 31 && g <= 45) gmpParts.push('Vertrauen −5 %');
     else if (g >= 46 && g <= 60) gmpParts.push('Vertrauen −3 %');
     else if (g >= 61 && g <= 71) gmpParts.push('Vertrauen −1 %');
@@ -1376,9 +1408,14 @@ function render() {
     else if (k >= 40 && k <= 60) kommText = 'Zeitplan −2 %';
     categories.push({ label: 'Kommunikation', text: kommText });
 
-    if (state.skills.tech < 60) {
-      categories.push({ label: 'Technik', text: 'Risiko −5 % ⚠️, Wissen −4 %' });
-    }
+    const t = state.skills.tech;
+    let techText = '';
+    if (t >= 10 && t <= 39)      techText = 'Risiko −4 % ⚠️, Equipment-Wissen −4 %';
+    else if (t >= 40 && t <= 50) techText = 'Risiko −3 % ⚠️, Equipment-Wissen −3 %';
+    else if (t >= 51 && t <= 65) techText = 'Risiko −1 %, Equipment-Wissen −2 %';
+    else if (t >= 66 && t <= 80) techText = 'Equipment-Wissen +1 %';
+    else if (t >= 81)            techText = 'Equipment-Wissen +2 %, Motivation +3 %';
+    if (techText) categories.push({ label: 'Technik', text: techText });
 
     if (state.equipment.requiresAseptik) {
       const a = state.skills.aseptik;
