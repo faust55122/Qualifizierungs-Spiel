@@ -1431,9 +1431,10 @@ function render() {
     // Breite Ansicht: eine Zeile pro Kategorie. Kompakte Ansicht: alles in einer Zeile zusammengefasst.
     const wideRows = categories.map(c => `<div>${c.label}: ${c.text}</div>`).join('');
     const compactLine = categories.map(c => `${c.label}: ${c.text}`).join(' · ');
+    const isWide = document.getElementById('game')?.classList.contains('wide-layout');
     return `
-      <div class="decay-wide" style="margin-top:6px;font-size:11px;opacity:0.75;line-height:1.6">📉 Passiver Rundenabzug:${wideRows}</div>
-      <div class="decay-compact" style="margin-top:6px;font-size:11px;opacity:0.7">📉 Passiver Rundenabzug: ${compactLine}</div>`;
+      <div style="display:${isWide ? 'block' : 'none'};margin-top:6px;font-size:11px;opacity:0.75;line-height:1.6">📉 Passiver Rundenabzug:${wideRows}</div>
+      <div style="display:${isWide ? 'none' : 'block'};margin-top:6px;font-size:11px;opacity:0.7">📉 Passiver Rundenabzug: ${compactLine}</div>`;
   }
   if (state.lastEvent) {
     const isLil     = !!state.lastEvent.isLil;
