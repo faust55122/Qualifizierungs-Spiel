@@ -6,8 +6,8 @@
 //  HIGHSCORE — JSONBin.io Konfiguration
 //  Trage hier deine eigenen Werte ein:
 // ============================================================
-const JSONBIN_API_KEY  = 'DEIN_API_KEY_HIER';   // z.B. '$2a$10$abc123...'
-const JSONBIN_BIN_ID   = 'DEINE_BIN_ID_HIER';   // z.B. '6849abc12e...'
+const JSONBIN_API_KEY  = '$2a$10$25KUTuEXfrhJx..46EAvRuQlyMLiuD2G8YfXy8T3B4n/51wpKiS0C';   // z.B. '$2a$10$abc123...'
+const JSONBIN_BIN_ID   = '6a32e013da38895dfed1ffff';   // z.B. '6849abc12e...'
 const JSONBIN_BASE_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 const HS_ADMIN_PW      = 'gmp-reset-2025';       // ← Admin-Passwort für Reset (ändern!)
 const HS_MAX_ENTRIES   = 20;
@@ -351,12 +351,12 @@ const PERSONAL_ACTIONS = [
 ];
 
 const EVENTS_BAD = [
-  { label:'Inmation-Schnittstelle vergessen',   msg:'⚙️ Die Automatisierung hat die Inmation-Schnittstelle vergessen.',         effects:{ risiko:10 }, progressPenalty:5, weekMax:4 },
+  { label:'Inmation-Schnittstelle vergessen',   msg:'⚙️ Die Automatisierung (EI&C) hat die Inmation-Schnittstelle vergessen.',         effects:{ risiko:10 }, progressPenalty:5, weekMax:4 },
   { label:'Equipment-Verhalten unerwartet',     msg:'🔩 Das Equipment verhält sich unerwartet. Niemand versteht warum.',        effects:{ wissen:-10, risiko:8, motivation:-5 }, techMalus:true },
   { label:'Messwertabweichung',                 msg:'📉 Messwerte weichen ab — technische Ursache unklar.',                     effects:{ wissen:-8, vertrauen:-8, risiko:10 }, techMalus:true },
   { label:'Kalibrierfehler',                    msg:'🛠️ Ein Kalibrierfehler bleibt wochenlang unbemerkt.',                      effects:{ wissen:-12, gmp:-8, risiko:12 }, techMalus:true },
   { label:'Unbekannte Parameter',               msg:'❓ Der Lieferant fragt nach Parametern, die niemand im Team kennt.',        effects:{ wissen:-8, vertrauen:-6, zeit:-5 }, techMalus:true },
-  { label:'Falsche Dokumentenversion',          msg:'📄 Der Lieferant hat Version 27 geschickt. Sie arbeiten mit Version 23.',              effects:{ gmp:-8,  zeit:-5              } },
+  { label:'Falsche Dokumentenversion',          msg:'📄 Der Lieferant hat das Lastenheft in Version 27 geschickt. Sie arbeiten mit Version 23.',              effects:{ gmp:-8,  zeit:-5              } },
   { label:'Quality-Fund Seite 183',             msg:'🔍 Quality hat einen fehlenden Punkt auf Seite 183 gefunden.',                         effects:{ vertrauen:-10, gmp:-5         } },
   { label:'Falscher Maschinenname im Protokoll',msg:'💻 Im IQ-Protokoll steht plötzlich der Name einer anderen Maschine.',                  effects:{ gmp:-12, vertrauen:-8         }, phaseMin:3 },
   { label:'Undokumentierte Lieferanten-Demo',   msg:'🎉 Der Lieferant demonstriert stolz eine Funktion, die nicht in der URS steht.',       effects:{ wissen:5, risiko:10           } },
