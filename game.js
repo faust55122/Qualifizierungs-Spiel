@@ -6,8 +6,8 @@
 //  HIGHSCORE — JSONBin.io Konfiguration
 //  Trage hier deine eigenen Werte ein:
 // ============================================================
-const JSONBIN_API_KEY  = '$2a$10$25KUTuEXfrhJx..46EAvRuQlyMLiuD2G8YfXy8T3B4n/51wpKiS0C';   // z.B. '$2a$10$abc123...'
-const JSONBIN_BIN_ID   = '6a32e013da38895dfed1ffff';   // z.B. '6849abc12e...'
+const JSONBIN_API_KEY  = 'DEIN_API_KEY_HIER';   // z.B. '$2a$10$abc123...'
+const JSONBIN_BIN_ID   = 'DEINE_BIN_ID_HIER';   // z.B. '6849abc12e...'
 const JSONBIN_BASE_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 const HS_ADMIN_PW      = 'gmp-reset-2025';       // ← Admin-Passwort für Reset (ändern!)
 const HS_MAX_ENTRIES   = 20;
@@ -1212,7 +1212,7 @@ function showDivalOffer() {
     <p style="margin-bottom:12px">Die Möglichkeit besteht: eine vollständig papierlose, digitale Qualifizierung — kein Word, kein Drucker, keine Unterschriften auf Papier.</p>
     <p style="margin-bottom:12px">Das Projekt nennt sich <strong>DIVAL</strong>. Es ist risikoreich, kostet sofort <strong>3 AP</strong> und schaltet neue IT-Aktionen frei, die ihrerseits Budget kosten können.</p>
     <p style="margin-bottom:12px">⚠️ <strong style="color:var(--amber)">Wichtig:</strong> Für ein erfolgreiches DIVAL-Projekt ist ein <strong>höheres technisches Verständnis</strong> erforderlich. Ist dieses nicht ausreichend entwickelt, ist ein Erfolg ausgeschlossen.</p>
-    <p style="margin-bottom:16px">Die Erfolgswahrscheinlichkeit hängt von deinem <strong>Technischen Verständnis</strong> ab — mind. 70 % erforderlich. Tech 70–79 %: 50 % · Tech 80–89 %: 60 % · Tech ≥ 90 %: 65 %. Pro genutzter DIVAL-Projektaktion: <strong>+5 %</strong> (max. +20 % bei allen 4 Aktionen). Bei Erfolg: <strong style="color:var(--green)">+100 Bonuspunkte</strong>. Bei Misserfolg: −50 Punkte.</p>
+    <p style="margin-bottom:16px">Ein <strong>fortgeschrittenes technisches Verständnis</strong> ist Voraussetzung für den Erfolg. Wer zusätzlich die DIVAL-Projektaktionen konsequent nutzt, verbessert seine Chancen. Bei Erfolg: <strong style="color:var(--green)">+100 Bonuspunkte</strong>. Bei Misserfolg: −50 Punkte.</p>
     <p style="color:var(--text3);font-size:12px">Entscheidung gilt für das gesamte restliche Spiel.</p>`;
   mbtn.style.display = 'none'; // Standard-Button ausblenden
   const hsBtn = document.getElementById('hs-open-btn');
