@@ -846,10 +846,10 @@ function _applyPassiveDecay() {
   if (gmpMalus > 0) state.kpis.gmp = clamp(state.kpis.gmp - gmpMalus);
 
   let gmpVertrauenMalus = 0;
-  if (g >= 10 && g <= 30)      gmpVertrauenMalus = 4;
-  else if (g >= 31 && g <= 45) gmpVertrauenMalus = 5;
-  else if (g >= 46 && g <= 60) gmpVertrauenMalus = 3;
-  else if (g >= 61 && g <= 71) gmpVertrauenMalus = 1;
+  if (g >= 10 && g <= 30)      gmpVertrauenMalus = 5;
+  else if (g >= 31 && g <= 45) gmpVertrauenMalus = 3;
+  else if (g >= 46 && g <= 60) gmpVertrauenMalus = 2;
+  else if (g >= 61 && g <= 71) gmpVertrauenMalus = 0;
   // ab 72 %: kein Vertrauens-Abzug mehr
   if (gmpVertrauenMalus > 0) state.kpis.vertrauen = clamp(state.kpis.vertrauen - gmpVertrauenMalus);
 
@@ -877,7 +877,7 @@ function _applyPassiveDecay() {
     else if (a >= 31 && a <= 45) { vertrauenDelta = -2; risikostatusDelta = -2; }
     else if (a >= 46 && a <= 60) { vertrauenDelta = -1; risikostatusDelta = -1; }
     else if (a >= 61 && a <= 75) { vertrauenDelta =  1; risikostatusDelta =  1; }
-    else if (a >= 76)            { vertrauenDelta =  2; risikostatusDelta =  2; }
+    else if (a >= 76)            { vertrauenDelta =  2; risikostatusDelta =  3; }
     state.kpis.vertrauen = clamp(state.kpis.vertrauen + vertrauenDelta);
     state.kpis.risiko    = clamp(state.kpis.risiko - risikostatusDelta); // invertiert!
   }
@@ -887,13 +887,13 @@ function _applyPassiveDecay() {
   const t = state.skills.tech;
   if (t >= 10 && t <= 39) {
     state.kpis.risiko = clamp(state.kpis.risiko + 4);
-    state.kpis.wissen = clamp(state.kpis.wissen - 4);
+    state.kpis.wissen = clamp(state.kpis.wissen - 3);
   } else if (t >= 40 && t <= 50) {
     state.kpis.risiko = clamp(state.kpis.risiko + 3);
-    state.kpis.wissen = clamp(state.kpis.wissen - 3);
+    state.kpis.wissen = clamp(state.kpis.wissen - 2);
   } else if (t >= 51 && t <= 65) {
     state.kpis.risiko = clamp(state.kpis.risiko + 1);
-    state.kpis.wissen = clamp(state.kpis.wissen - 2);
+    state.kpis.wissen = clamp(state.kpis.wissen - 1);
   } else if (t >= 66 && t <= 80) {
     state.kpis.wissen = clamp(state.kpis.wissen + 1);
   } else if (t >= 81) {
